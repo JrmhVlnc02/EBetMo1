@@ -3,6 +3,36 @@
   <component name="DesignSurface">
     <option name="filePathToZoomLevelMap">
       <map>
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_account.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_add_item.xml" value="0.33" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_bet_item.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_edit_profile.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_get_coin.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_home.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_main.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_notification.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_raffle.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_sign_up.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_verification.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_view_item.xml" value="0.23333333333333334" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/activity_view_user.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/add_coin_dialog.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/application_submitted_dialog.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/bet_dialog.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/bet_info.xml" value="0.1578125" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/bottom_sheet_layout.xml" value="0.17831813576494426" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/draw_dialog.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/loading.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/logout_dialog.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/notify_dialog.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/pick_id_dialog.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/raffle_dialog.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/single_bettors.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/single_item.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/single_notify.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/single_topup.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/terms.xml" value="0.36666666666666664" />
+        <entry key="..\:/Jrmh/school/3rd Yr/1st sem/Project Betting/mhalic/orig/EBetMo2/app/src/main/res/layout/verification_dialog.xml" value="0.36666666666666664" />
         <entry key="..\:/Users/Hanz Rebancos/Downloads/Mycalculator-Master/EBetMo2/app/src/main/res/layout/activity_account.xml" value="0.264" />
         <entry key="..\:/Users/Hanz Rebancos/Downloads/Mycalculator-Master/EBetMo2/app/src/main/res/layout/activity_add_item.xml" value="0.27447916666666666" />
         <entry key="..\:/Users/Hanz Rebancos/Downloads/Mycalculator-Master/EBetMo2/app/src/main/res/layout/activity_get_coin.xml" value="0.27447916666666666" />

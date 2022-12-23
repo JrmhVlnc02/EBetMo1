@@ -1,13 +1,19 @@
 package com.example.ebetmo;
 
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.TimePickerDialog;
 import android.content.ContentValues;
+import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -16,6 +22,9 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -25,13 +34,31 @@ import android.widget.ImageView;
 import android.widget.TimePicker;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.material.textfield.TextInputLayout;
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 public class add_item extends AppCompatActivity {
+    private final int REQUEST_CAMERA = 1, REQUEST_GALLERY = 0;
+    private Bitmap bitmap;
     SessionManager sessionManager;
     DBHelper dbHelper;
     SQLiteDatabase sqLiteDatabase;
@@ -42,6 +69,10 @@ public class add_item extends AppCompatActivity {
     ImageButton back;
     LoadingDialog loadingDialog;
     String item_id;
+    public static String imageLocation = "";
+    private RequestQueue queue;
+
+    //192.168.0.122
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -72,35 +103,65 @@ public class add_item extends AppCompatActivity {
             save.setVisibility(View.VISIBLE);
             submit_item.setVisibility(View.GONE);
 
+            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+            String url ="http://" + final_ip.IP_ADDRESS + "/ebetmo_final/single_item.php";
+
+            StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                    new Response.Listener<String>() {
+                        @Override
+                        public void onResponse(String response) {
+
+                            try {
+                                JSONArray jsonArray = new JSONArray(response);
+
+                                if(jsonArray.length() > 0 ) {
+                                    for (int i = 0; i < jsonArray.length(); i++) {
+                                        JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+                                        name.setText(jsonObject.getString("item_name"));
+                                        des.setText(jsonObject.getString("item_description"));
+                                        price.setText(jsonObject.getString("price"));
+                                        type.setText(jsonObject.getString("type"));
+                                        time.setText(jsonObject.getString("time"));
+                                        slots.setText(jsonObject.getString("slots"));
+                                        Picasso.with(getApplicationContext()).load("http://" + final_ip.IP_ADDRESS + "/ebetmo_final/" + jsonObject.getString("item_image")).into(image);
 
 
-            Cursor c = sqLiteDatabase.rawQuery("SELECT * FROM items WHERE id=?", new String[]{item_id});
-            if (c.getCount()>0){
-                while(c.moveToNext()){
-                    name.setText(c.getString(2));
-                    des.setText(c.getString(3));
-                    price.setText(c.getString(7));
-                    type.setText(c.getString(5));
-                    time.setText(c.getString(6));
-                    slots.setText(c.getString(8));
-
-                    byte[] image1 = c.getBlob(4);
-                    Bitmap bitmap = BitmapFactory.decodeByteArray(image1, 0,image1.length);
-                    image.setImageBitmap(bitmap);
+                                    }
+                                }else{
+                                        Toast.makeText(add_item.this, "Empty Data! Try again.", Toast.LENGTH_SHORT).show();
+                                        finish();
+                                    }
 
 
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                            }
+                        }
+                    }, new Response.ErrorListener() {
+                @Override
+                public void onErrorResponse(VolleyError error) {
+                    Log.e("Error", error.getLocalizedMessage());
                 }
+            }){
+                protected Map<String, String> getParams(){
+                    Map<String, String> paramV = new HashMap<>();
+                    paramV.put("id", item_id);
+                    return paramV;
+                }
+            };
+            queue.add(stringRequest);
 
-            }else {
-                Toast.makeText(this, "No data found", Toast.LENGTH_SHORT).show();
-                finish();
-            }
+
 
 
 
         }
 
-        upload.setOnClickListener(v -> mGetContent .launch("image/*"));
+//        upload.setOnClickListener(v -> mGetContent .launch("image/*"));
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setData(MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+        upload.setOnClickListener(v -> activityResultLauncher.launch(intent));
 
         back.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -114,10 +175,17 @@ public class add_item extends AppCompatActivity {
             public void onClick(View view) {
                 loadingDialog.showLoading("Please Wait...");
 
-                Bitmap bitmap=((BitmapDrawable)image.getDrawable()).getBitmap();
+
+                Bitmap bitmap = ((BitmapDrawable)image.getDrawable()).getBitmap();
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                byte[]item_image = stream.toByteArray();
+
+
+                    bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                    byte[]item_image = stream.toByteArray();
+                    final String base64image = Base64.encodeToString(item_image,Base64.DEFAULT);
+
+
+
 
                 String named = name.getText().toString().trim();
                 String des1 = des.getText().toString().trim();
@@ -128,17 +196,17 @@ public class add_item extends AppCompatActivity {
                 String status = "open";
                 String winner = "0";
 
-                ContentValues contentValues = new ContentValues();
-                contentValues.put("owner_id", owner_id);
-                contentValues.put("item_name", named);
-                contentValues.put("item_description", des1);
-                contentValues.put("item_image", item_image);
-                contentValues.put("type", type1);
-                contentValues.put("time", time1);
-                contentValues.put("price", price1);
-                contentValues.put("slots", slots1);
-                contentValues.put("status", status);
-                contentValues.put("winner", winner);
+//                ContentValues contentValues = new ContentValues();
+//                contentValues.put("owner_id", owner_id);
+//                contentValues.put("item_name", named);
+//                contentValues.put("item_description", des1);
+//                contentValues.put("item_image", item_image);
+//                contentValues.put("type", type1);
+//                contentValues.put("time", time1);
+//                contentValues.put("price", price1);
+//                contentValues.put("slots", slots1);
+//                contentValues.put("status", status);
+//                contentValues.put("winner", winner);
 
                 if(named.equals("")||des1.equals("")||type1.equals("")||time1.equals("")||price1.equals("")||slots1.equals("")){
                     Toast.makeText(add_item.this, "Please Complete Details!", Toast.LENGTH_SHORT).show();
@@ -155,15 +223,62 @@ public class add_item extends AppCompatActivity {
                         if (named.equals("")||des1.equals("")||price1.equals("")||type1.equals("")||time1.equals("")||slots1.equals("")){
                             Toast.makeText(add_item.this, "Please complete details!", Toast.LENGTH_SHORT).show();
                         }else{
-                            long result = sqLiteDatabase.insert("items",null,contentValues);
-                            if(result==-1){
-                                Toast.makeText(getApplicationContext(), "Something problem in Inserting Data!", Toast.LENGTH_SHORT).show();
-                                loadingDialog.hideLoading();
-                            }else{
-                                Toast.makeText(getApplicationContext(), "Item Posted.", Toast.LENGTH_SHORT).show();
-                                startActivity(new Intent(add_item.this, home.class));
-                                finish();
-                            }
+                            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+                            String url ="http://" + final_ip.IP_ADDRESS + "/ebetmo_final/post_item.php";
+
+                            StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                                    new Response.Listener<String>() {
+                                        @Override
+                                        public void onResponse(String response) {
+                                            if(response.equals("Success")){
+                                                Toast.makeText(getApplicationContext(), "Item Posted.", Toast.LENGTH_SHORT).show();
+                                                startActivity(new Intent(add_item.this, home.class));
+                                                finish();
+
+                                            }else{
+                                                Toast.makeText(add_item.this, response, Toast.LENGTH_SHORT).show();
+                                                loadingDialog.hideLoading();
+
+                                            }
+
+                                        }
+                                    }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    Log.e("Error", error.getLocalizedMessage());
+                                }
+                            }){
+                                protected Map<String, String> getParams(){
+                                    Map<String, String> paramV = new HashMap<>();
+                                    paramV.put("owner_id", owner_id);
+                                    paramV.put("name", named);
+                                    paramV.put("des", des1);
+                                    paramV.put("price", price1);
+                                    paramV.put("type", type1);
+                                    paramV.put("time", time1);
+                                    paramV.put("slots", slots1);
+                                    paramV.put("status", status);
+                                    paramV.put("winner", winner);
+
+
+//
+//                                    String encodedImage = Base64.encodeToString(item_image, Base64.DEFAULT);
+
+                                    paramV.put("item_image", base64image);
+
+                                    return paramV;
+                                }
+                            };
+                            queue.add(stringRequest);
+//                            long result = sqLiteDatabase.insert("items",null,contentValues);
+//                            if(result==-1){
+//                                Toast.makeText(getApplicationContext(), "Something problem in Inserting Data!", Toast.LENGTH_SHORT).show();
+//                                loadingDialog.hideLoading();
+//                            }else{
+//                                Toast.makeText(getApplicationContext(), "Item Posted.", Toast.LENGTH_SHORT).show();
+//                                startActivity(new Intent(add_item.this, home.class));
+//                                finish();
+//                            }
                         }
                     }
 
@@ -184,10 +299,20 @@ public class add_item extends AppCompatActivity {
             public void onClick(View view) {
                 loadingDialog.showLoading("Please Wait...");
 
-                Bitmap bitmap=((BitmapDrawable)image.getDrawable()).getBitmap();
+//                Bitmap bitmap=((BitmapDrawable)image.getDrawable()).getBitmap();
+//                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+//                byte[]item_image = stream.toByteArray();
+
+                Bitmap bitmap = ((BitmapDrawable)image.getDrawable()).getBitmap();
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
+
+
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
                 byte[]item_image = stream.toByteArray();
+                final String base64image = Base64.encodeToString(item_image,Base64.DEFAULT);
+
+
 
                 String named = name.getText().toString().trim();
                 String des1 = des.getText().toString().trim();
@@ -196,14 +321,14 @@ public class add_item extends AppCompatActivity {
                 String time1 = time.getText().toString().trim();
                 String slots1= slots.getText().toString().trim();
 
-                ContentValues contentValues = new ContentValues();
-                contentValues.put("item_name", named);
-                contentValues.put("item_description", des1);
-                contentValues.put("item_image", item_image);
-                contentValues.put("type", type1);
-                contentValues.put("time", time1);
-                contentValues.put("price", price1);
-                contentValues.put("slots", slots1);
+//                ContentValues contentValues = new ContentValues();
+//                contentValues.put("item_name", named);
+//                contentValues.put("item_description", des1);
+//                contentValues.put("item_image", item_image);
+//                contentValues.put("type", type1);
+//                contentValues.put("time", time1);
+//                contentValues.put("price", price1);
+//                contentValues.put("slots", slots1);
 
                 if(named.equals("")||des1.equals("")||type1.equals("")||time1.equals("")||price1.equals("")||slots1.equals("")){
                     Toast.makeText(add_item.this, "Please Complete Details!", Toast.LENGTH_SHORT).show();
@@ -218,15 +343,63 @@ public class add_item extends AppCompatActivity {
                         if (named.equals("")||des1.equals("")||price1.equals("")||type1.equals("")||time1.equals("")||slots1.equals("")){
                             Toast.makeText(add_item.this, "Please complete details!", Toast.LENGTH_SHORT).show();
                         }else{
-                            long result = sqLiteDatabase.update("items",contentValues,"id="+item_id,null);
-                            if(result==-1){
-                                Toast.makeText(getApplicationContext(), "Something problem in Updating Data!", Toast.LENGTH_SHORT).show();
-                                loadingDialog.hideLoading();
-                            }else{
-                                Toast.makeText(getApplicationContext(), "Item is Updated.", Toast.LENGTH_SHORT).show();
-                                startActivity(new Intent(add_item.this, home.class));
-                                finish();
-                            }
+
+                            RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+                            String url ="http://" + final_ip.IP_ADDRESS + "/ebetmo_final/update_item.php";
+
+                            StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                                    new Response.Listener<String>() {
+                                        @Override
+                                        public void onResponse(String response) {
+                                            if(response.equals("Success")){
+                                                    Toast.makeText(getApplicationContext(), "Item is Updated.", Toast.LENGTH_SHORT).show();
+                                                    startActivity(new Intent(add_item.this, home.class));
+                                                    finish();
+
+                                            }else{
+                                                Toast.makeText(add_item.this, response, Toast.LENGTH_SHORT).show();
+                                                loadingDialog.hideLoading();
+
+                                            }
+
+                                        }
+                                    }, new Response.ErrorListener() {
+                                @Override
+                                public void onErrorResponse(VolleyError error) {
+                                    Log.e("Error", error.getLocalizedMessage());
+                                }
+                            }){
+                                protected Map<String, String> getParams(){
+                                    Map<String, String> paramV = new HashMap<>();
+
+
+                                    paramV.put("item_name", named);
+                                    paramV.put("item_description", des1);
+                                    paramV.put("item_image", base64image);
+                                    paramV.put("type", type1);
+                                    paramV.put("time", time1);
+                                    paramV.put("price", price1);
+                                    paramV.put("slots", slots1);
+                                    paramV.put("item_id", item_id);
+
+
+
+
+
+                                    return paramV;
+                                }
+                            };
+                            queue.add(stringRequest);
+
+//                            long result = sqLiteDatabase.update("items",contentValues,"id="+item_id,null);
+//                            if(result==-1){
+//                                Toast.makeText(getApplicationContext(), "Something problem in Updating Data!", Toast.LENGTH_SHORT).show();
+//                                loadingDialog.hideLoading();
+//                            }else{
+//                                Toast.makeText(getApplicationContext(), "Item is Updated.", Toast.LENGTH_SHORT).show();
+//                                startActivity(new Intent(add_item.this, home.class));
+//                                finish();
+//                            }
                         }
                     }
 
@@ -291,14 +464,139 @@ public class add_item extends AppCompatActivity {
         save = findViewById(R.id.save_btn);
     }
 
-    ActivityResultLauncher<String> mGetContent =registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
-            new ActivityResultCallback<Uri>() {
+    ActivityResultLauncher<Intent> activityResultLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
                 @Override
-                public void onActivityResult(Uri result) {
-                    image.setImageURI(result);
+                public void onActivityResult(ActivityResult result) {
+                    if(result.getResultCode() == Activity.RESULT_OK){
+                        Intent data = result.getData();
+                        Uri uri = data.getData();
+                        try {
+                            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                            image.setImageBitmap(bitmap);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
+                    }
                 }
-            }
-    );
+            });
+//    ActivityResultLauncher<String> mGetContent =registerForActivityResult(
+//            new ActivityResultContracts.GetContent(),
+//            new ActivityResultCallback<Uri>() {
+//                @Override
+//                public void onActivityResult(Uri result) {
+//                    if(result.)
+//
+//                }
+//            }
+//    );
+//
+//    ActivityResultLauncher<String> mGetContent =registerForActivityResult(
+//            new ActivityResultContracts.GetContent(),
+//            new ActivityResultCallback<Uri>() {
+//                @Override
+//                public void onActivityResult(Uri result) {
+//                    image.setImageURI(result);
+//
+//                }
+//            }
+//    );
+//
+//    private void getPic()
+//    {
+//        Intent galleryIntent = new Intent(Intent.ACTION_PICK,
+//                MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
+//        galleryIntent.setType(getString(R.string.galleryType));
+//        startActivityForResult(galleryIntent.createChooser(galleryIntent, "Select Images"), REQUEST_GALLERY);
+//    }
+//
+//    private void takePic()
+//    {
+//        Intent takePicIntent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+//        startActivityForResult(takePicIntent, REQUEST_CAMERA);
+//    }
+//
+//    @Override
+//    protected void onActivityResult(int requestCode, int resultCode, Intent data)
+//    {
+//        super.onActivityResult(requestCode, resultCode, data);
+//        if(resultCode == RESULT_OK)
+//        {
+//            if(requestCode == REQUEST_CAMERA)
+//            {
+//
+//                itemBitmap = (Bitmap) data.getExtras().get("data");
+//                image.setImageBitmap(itemBitmap);
+//
+//                // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+//                Uri tempUri = getImageUri(getApplicationContext(), itemBitmap);
+//
+//                // CALL THIS METHOD TO GET THE ACTUAL PATH
+//                File finalFile = new File(getRealPathFromURI(tempUri));
+//
+//                imageLocation = finalFile.getAbsolutePath();
+//
+//
+//            }
+//            else if(requestCode == REQUEST_GALLERY && data != null)
+//            {
+//                try {
+//                    itemBitmap = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(),
+//                            data.getData());
+//                    image.setImageBitmap(itemBitmap);
+//
+//                    // CALL THIS METHOD TO GET THE URI FROM THE BITMAP
+//                    Uri tempUri = getImageUri(getApplicationContext(), itemBitmap);
+//
+//                    // CALL THIS METHOD TO GET THE ACTUAL PATH
+//                    File finalFile = new File(getRealPathFromURI(tempUri));
+//
+//                    imageLocation = finalFile.getAbsolutePath();
+//                    Toast.makeText(getApplicationContext(), finalFile.getAbsolutePath(), Toast.LENGTH_SHORT).show();
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                }
+//            }
+//        }
+//    }
+//
+//    public String getRealPathFromURI(Uri uri) {
+//        String path = "";
+//        if (getContentResolver() != null) {
+//            Cursor cursor = getContentResolver().query(uri, null, null, null, null);
+//            if (cursor != null) {
+//                cursor.moveToFirst();
+//                int idx = cursor.getColumnIndex(MediaStore.Images.ImageColumns.DATA);
+//                path = cursor.getString(idx);
+//                cursor.close();
+//            }
+//        }
+//        return path;
+//    }
+//
+//    public Uri getImageUri(Context inContext, Bitmap inImage) {
+//        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+//        inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+//        String path = MediaStore.Images.Media.insertImage(inContext.getContentResolver(), inImage, "Title", null);
+//        return Uri.parse(path);
+//    }
+//
+//    public void insertPic1(View view){
+//        final CharSequence[] items = {"Camera", "Gallery", "Cancel"};
+//        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+//        builder.setTitle("Upload Item Image");
+//        builder.setItems(items, new DialogInterface.OnClickListener() {
+//            @Override
+//            public void onClick(DialogInterface dialog, int which) {
+//                if(items[which].equals("Camera"))
+//                    takePic();
+//                else if(items[which].equals("Gallery"))
+//                    getPic();
+//                else if(items[which].equals("Cancel"))
+//                    dialog.dismiss();
+//            }
+//        });
+//        builder.show();
+//    }
 }

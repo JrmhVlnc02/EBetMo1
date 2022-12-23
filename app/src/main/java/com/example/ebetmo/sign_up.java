@@ -1,5 +1,6 @@
 package com.example.ebetmo;
 
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
@@ -10,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.content.ContextCompat;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.app.Dialog;
 import android.app.TimePickerDialog;
@@ -22,6 +25,9 @@ import android.graphics.drawable.BitmapDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.DatePicker;
@@ -33,11 +39,24 @@ import android.widget.TimePicker;
 import android.widget.Toast;
 
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
 import com.google.android.material.textfield.TextInputLayout;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 
 public class sign_up extends AppCompatActivity {
@@ -50,6 +69,7 @@ public class sign_up extends AppCompatActivity {
     TextView to_login;
     ImageButton upload;
     LoadingDialog loadingDialog;
+    Bitmap bitmap;
 
 
 
@@ -80,7 +100,10 @@ public class sign_up extends AppCompatActivity {
             }
         });
 
-        upload.setOnClickListener(v -> mGetContent .launch("image/*"));
+//        upload.setOnClickListener(v -> mGetContent .launch("image/*"));
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setData(MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+        upload.setOnClickListener(v -> activityResultLauncher.launch(intent));
 
         bDate.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -100,10 +123,21 @@ public class sign_up extends AppCompatActivity {
             public void onClick(View view) {
                 loadingDialog.showLoading("Please Wait...");
 
-                Bitmap bitmap=((BitmapDrawable)profile.getDrawable()).getBitmap();
+//                Bitmap bitmap=((BitmapDrawable)profile.getDrawable()).getBitmap();
+//                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+//                byte[]image = stream.toByteArray();
+
+                Bitmap bitmap = ((BitmapDrawable)profile.getDrawable()).getBitmap();
                 ByteArrayOutputStream stream = new ByteArrayOutputStream();
+
+
                 bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                byte[]image = stream.toByteArray();
+                byte[]item_image = stream.toByteArray();
+                final String base64image = Base64.encodeToString(item_image,Base64.DEFAULT);
+
+
+
                 String name1 = name.getText().toString().trim();
                 String email1 = email.getText().toString().trim();
                 String contact1 = contact.getText().toString().trim();
@@ -113,37 +147,82 @@ public class sign_up extends AppCompatActivity {
                 String address1 = address.getText().toString().trim();
                 String coin = "0";
 
-                ContentValues contentValues = new ContentValues();
-                contentValues.put("fullName", name1);
-                contentValues.put("contact", contact1);
-                contentValues.put("email", email1);
-                contentValues.put("password", password1);
-                contentValues.put("profile", image);
-                contentValues.put("b_day", bDate1);
-                contentValues.put("address", address1);
-                contentValues.put("coin", coin);
-                contentValues.put("verified", Verification);
+//                ContentValues contentValues = new ContentValues();
+//                contentValues.put("fullName", name1);
+//                contentValues.put("contact", contact1);
+//                contentValues.put("email", email1);
+//                contentValues.put("password", password1);
+//                contentValues.put("profile", image);
+//                contentValues.put("b_day", bDate1);
+//                contentValues.put("address", address1);
+//                contentValues.put("coin", coin);
+//                contentValues.put("verified", Verification);
 
                 if(name1.equals("") || email1.equals("") || contact1.equals("") || password1.equals("") || bDate1.equals("")){
                     Toast.makeText(getApplicationContext(), "Please Complete Details", Toast.LENGTH_SHORT).show();
                     loadingDialog.hideLoading();
                 }else{
                     if(confirm1.equals(password1)){
-                        boolean check = dbHelper.check_email(email1);
-                        if(!check){
-                            long result = sqLiteDatabase.insert("users",null,contentValues);
-                            if(result==-1){
-                                loadingDialog.hideLoading();
-                                Toast.makeText(getApplicationContext(), "Something problem in Inserting Data", Toast.LENGTH_SHORT).show();
-                            }else{
-                                Toast.makeText(getApplicationContext(), "Registered Successfully", Toast.LENGTH_SHORT).show();
-                                startActivity(new Intent(sign_up.this, MainActivity.class));
-                                finish();
+
+                        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+                        String url ="http://"+final_ip.IP_ADDRESS+"/ebetmo_final/signup.php";
+
+                        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                                new Response.Listener<String>() {
+                                    @SuppressLint("ResourceAsColor")
+                                    @Override
+                                    public void onResponse(String response) {
+                                        if(response.equals("Success")){
+                                            Toast.makeText(getApplicationContext(), "Registered Successfully", Toast.LENGTH_SHORT).show();
+                                            startActivity(new Intent(sign_up.this, MainActivity.class));
+                                            finish();
+                                        }else
+                                            loadingDialog.hideLoading();
+                                            Toast.makeText(sign_up.this, response, Toast.LENGTH_SHORT).show();
+
+                                    }
+                                }, new Response.ErrorListener() {
+                            @Override
+                            public void onErrorResponse(VolleyError error) {
+                                Log.e("Error", error.getLocalizedMessage());
                             }
-                        }else{
-                            loadingDialog.hideLoading();
-                            Toast.makeText(getApplicationContext(), "Email Already Exist!", Toast.LENGTH_SHORT).show();
-                        }
+                        }){
+                            protected Map<String, String> getParams(){
+                                Map<String, String> paramV = new HashMap<>();
+                                paramV.put("fullname", name1);
+                                paramV.put("email", email1);
+                                paramV.put("contact", contact1);
+                                paramV.put("password", password1);
+                                paramV.put("bday", bDate1);
+                                paramV.put("address", address1);
+                                paramV.put("coin", coin);
+                                paramV.put("verified", Verification);
+                                paramV.put("profile", base64image);
+
+                                return paramV;
+                            }
+                        };
+                        queue.add(stringRequest);
+
+
+
+
+
+//                        boolean check = dbHelper.check_email(email1);
+//                        if(!check){
+//                            long result = sqLiteDatabase.insert("users",null,contentValues);
+//                            if(result==-1){
+//                                loadingDialog.hideLoading();
+//                                Toast.makeText(getApplicationContext(), "Something problem in Inserting Data", Toast.LENGTH_SHORT).show();
+//                            }else{
+//                                Toast.makeText(getApplicationContext(), "Registered Successfully", Toast.LENGTH_SHORT).show();
+//                                startActivity(new Intent(sign_up.this, MainActivity.class));
+//                                finish();
+//                            }
+//                        }else{
+//                            loadingDialog.hideLoading();
+//                            Toast.makeText(getApplicationContext(), "Email Already Exist!", Toast.LENGTH_SHORT).show();
+//                        }
 
                     }else{
                         loadingDialog.hideLoading();
@@ -162,6 +241,24 @@ public class sign_up extends AppCompatActivity {
 
 
     }
+
+    ActivityResultLauncher<Intent> activityResultLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
+                @Override
+                public void onActivityResult(ActivityResult result) {
+                    if(result.getResultCode() == Activity.RESULT_OK){
+                        Intent data = result.getData();
+                        Uri uri = data.getData();
+                        try {
+                            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                            profile.setImageBitmap(bitmap);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
+
+                    }
+                }
+            });
 
     private void showDateTimeDialog(EditText bDate) {
         final Calendar calendar = Calendar.getInstance();

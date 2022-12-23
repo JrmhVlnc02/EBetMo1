@@ -2,7 +2,6 @@ package com.example.ebetmo;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.recyclerview.widget.GridLayoutManager;
-import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
 import android.app.Dialog;
@@ -10,6 +9,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
@@ -19,9 +19,22 @@ import android.widget.PopupMenu;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 public class home extends AppCompatActivity {
     TextView coin;
@@ -32,7 +45,7 @@ public class home extends AppCompatActivity {
     ImageButton popMenu;
     DBHelper dbHelper;
     ItemAdapter itemAdapter;
-    String Verification;
+    String Verification, myid;
     double my_coin;
     LinearLayout empty;
     Dialog dialog;
@@ -50,21 +63,20 @@ public class home extends AppCompatActivity {
            sessionManager = new SessionManager(this);
            dbHelper = new DBHelper(getApplicationContext());
            sqLiteDatabase = dbHelper.getWritableDatabase();
-           dialog = new Dialog(this);
-           displayItems();
+           dialog = new Dialog(getApplicationContext());
+           displayItems_online();
            my_coin = Double.parseDouble(sessionManager.getCoin());
            coin.setText("₱"+my_coin);
            Verification = sessionManager.getValid();
             calendar = Calendar.getInstance();
             simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
 
-
-
+           myid = sessionManager.getId();
 
 
         }catch (Exception e){
             e.printStackTrace();
-            Toast.makeText(getApplicationContext(), "Error. Reload App!", Toast.LENGTH_SHORT).show();
+
 
         }
 
@@ -131,40 +143,100 @@ public class home extends AppCompatActivity {
 
     }
 
-    private void displayItems() {
-        Cursor item = sqLiteDatabase.rawQuery("SELECT * FROM items ORDER BY id DESC", null);
-        ArrayList<ModelItem> modelItems = new ArrayList<>();
-        if(item.getCount() > 0){
-            empty.setVisibility(View.GONE);
-            recyclerView.setVisibility(View.VISIBLE);
+    private void displayItems_online(){
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+        String url ="http://" + final_ip.IP_ADDRESS + "/ebetmo_final/get_items.php";
 
-            while (item.moveToNext()) {
-                int id1 = item.getInt(0);
-                String owner = item.getString(1);
-                String name = item.getString(2);
-                String Des = item.getString(3);
-                byte[] itemImage = item.getBlob(4);
-                String type = item.getString(5);
-                String time = item.getString(6);
-                String price = item.getString(7);
-                String slots = item.getString(8);
-                modelItems.add(new ModelItem(id1,name,Des,itemImage,type,time,owner,slots,price));
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
 
+                        try {
+
+
+                            ArrayList<ModelItem> modelItems = new ArrayList<>();
+                            empty.setVisibility(View.GONE);
+                            recyclerView.setVisibility(View.VISIBLE);
+                            JSONArray jsonArray = new JSONArray(response);
+                            if(jsonArray.length() > 0 ) {
+
+                                for (int i = 0; i < jsonArray.length(); i++) {
+                                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                    int id1 = jsonObject.getInt("id");
+                                    String owner = jsonObject.getString("owner_id");
+                                    String name = jsonObject.getString("item_name");
+                                    String Des = jsonObject.getString("item_description");
+                                    String itemImage = jsonObject.getString("item_image");
+                                    String type = jsonObject.getString("type");
+                                    String time = jsonObject.getString("time");
+                                    String price = jsonObject.getString("price");
+                                    String slots = jsonObject.getString("slots");
+                                    modelItems.add(new ModelItem(id1, name, Des, itemImage, type, time, owner, slots, price));
+
+                                }
+                                itemAdapter = new ItemAdapter(getApplicationContext(), R.layout.single_item, modelItems, sqLiteDatabase, dbHelper, sessionManager, dialog, calendar, simpleDateFormat);
+
+                                GridLayoutManager gridLayoutManager = new GridLayoutManager(getApplicationContext(), 2, GridLayoutManager.VERTICAL, false);
+                                recyclerView.setLayoutManager(gridLayoutManager);
+                                recyclerView.setAdapter(itemAdapter);
+                            }else{
+                                empty.setVisibility(View.VISIBLE);
+                                recyclerView.setVisibility(View.GONE);
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("Error", error.getLocalizedMessage());
             }
-            itemAdapter = new ItemAdapter(this,R.layout.single_item,modelItems,sqLiteDatabase,dbHelper,sessionManager,dialog,calendar,simpleDateFormat);
+        }){
+            protected Map<String, String> getParams(){
+                Map<String, String> paramV = new HashMap<>();
+                paramV.put("param", "abc");
+                return paramV;
+            }
+        };
+        queue.add(stringRequest);
+    }
 
-            GridLayoutManager gridLayoutManager = new GridLayoutManager(this,2,GridLayoutManager.VERTICAL,false);
-            recyclerView.setLayoutManager(gridLayoutManager);
-            recyclerView.setAdapter(itemAdapter);
-
-            item.close();
-
-        }
-
-        else {
-            empty.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.GONE);
-        }
+    private void displayItems() {
+//        Cursor item = sqLiteDatabase.rawQuery("SELECT * FROM items ORDER BY id DESC", null);
+//        ArrayList<ModelItem> modelItems = new ArrayList<>();
+//        if(item.getCount() > 0){
+//            empty.setVisibility(View.GONE);
+//            recyclerView.setVisibility(View.VISIBLE);
+//
+//            while (item.moveToNext()) {
+//                int id1 = item.getInt(0);
+//                String owner = item.getString(1);
+//                String name = item.getString(2);
+//                String Des = item.getString(3);
+//                byte[] itemImage = item.getBlob(4);
+//                String type = item.getString(5);
+//                String time = item.getString(6);
+//                String price = item.getString(7);
+//                String slots = item.getString(8);
+//                modelItems.add(new ModelItem(id1,name,Des,itemImage,type,time,owner,slots,price));
+//
+//            }
+//            itemAdapter = new ItemAdapter(this,R.layout.single_item,modelItems,sqLiteDatabase,dbHelper,sessionManager,dialog,calendar,simpleDateFormat);
+//
+//            GridLayoutManager gridLayoutManager = new GridLayoutManager(this,2,GridLayoutManager.VERTICAL,false);
+//            recyclerView.setLayoutManager(gridLayoutManager);
+//            recyclerView.setAdapter(itemAdapter);
+//
+//            item.close();
+//
+//        }
+//
+//        else {
+//            empty.setVisibility(View.VISIBLE);
+//            recyclerView.setVisibility(View.GONE);
+//        }
 
     }
 

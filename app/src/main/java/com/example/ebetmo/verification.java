@@ -1,11 +1,14 @@
 package com.example.ebetmo;
 
+import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.cardview.widget.CardView;
 
+import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.Dialog;
 import android.content.ContentValues;
 import android.content.Intent;
@@ -17,6 +20,9 @@ import android.graphics.drawable.ColorDrawable;
 import android.media.Image;
 import android.net.Uri;
 import android.os.Bundle;
+import android.provider.MediaStore;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -25,7 +31,17 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 public class verification extends AppCompatActivity {
     CardView id_panel;
@@ -39,6 +55,7 @@ public class verification extends AppCompatActivity {
     SQLiteDatabase sqLiteDatabase;
     double my_coin;
     EditText name, age, house, street, brgy, city, province, zip;
+    Bitmap bitmap;
 
 
     @Override
@@ -97,37 +114,87 @@ public class verification extends AppCompatActivity {
                 province1 = province.getText().toString().trim();
                 zip1 = zip.getText().toString().trim();
 
-                Bitmap bitmap=((BitmapDrawable)id_picture.getDrawable()).getBitmap();
-                ByteArrayOutputStream stream = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
-                byte[]image = stream.toByteArray();
+//                Bitmap bitmap=((BitmapDrawable)id_picture.getDrawable()).getBitmap();
+//                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+//                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+//                byte[]image = stream.toByteArray();
 
-                ContentValues contentValues = new ContentValues();
-                contentValues.put("owner_id", owner_id);
-                contentValues.put("name", name1);
-                contentValues.put("age", age1);
-                contentValues.put("house", house1);
-                contentValues.put("street", street1);
-                contentValues.put("brgy", brgy1);
-                contentValues.put("city", city1);
-                contentValues.put("province", province1);
-                contentValues.put("zip", zip1);
-                contentValues.put("id_picture", image);
-                contentValues.put("id_type", ID_Type);
+                Bitmap bitmap = ((BitmapDrawable)id_picture.getDrawable()).getBitmap();
+                ByteArrayOutputStream stream = new ByteArrayOutputStream();
+
+
+                bitmap.compress(Bitmap.CompressFormat.JPEG, 100, stream);
+                byte[]item_image = stream.toByteArray();
+                final String base64image = Base64.encodeToString(item_image,Base64.DEFAULT);
+
+//                ContentValues contentValues = new ContentValues();
+//                contentValues.put("owner_id", owner_id);
+//                contentValues.put("name", name1);
+//                contentValues.put("age", age1);
+//                contentValues.put("house", house1);
+//                contentValues.put("street", street1);
+//                contentValues.put("brgy", brgy1);
+//                contentValues.put("city", city1);
+//                contentValues.put("province", province1);
+//                contentValues.put("zip", zip1);
+//                contentValues.put("id_picture", image);
+//                contentValues.put("id_type", ID_Type);
 
                 if (name1.equals("")||age1.equals("")||house1.equals("")||street1.equals("")||brgy1.equals("")||city1.equals("")||province1.equals("")||zip1.equals(""))
                     Toast.makeText(verification.this, "Please Complete Details!", Toast.LENGTH_SHORT).show();
                 else{
-                    long result = sqLiteDatabase.insert("verification",null,contentValues);
-                    if(result==-1){
-                        Toast.makeText(getApplicationContext(), "Something problem in Inserting Data", Toast.LENGTH_SHORT).show();
-                    }else{
-                        successDialog();
-                        updateUserValidation(owner_id);
-                        sessionManager.setValid("Verified");
 
+                    RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+                    String url ="http://" + final_ip.IP_ADDRESS + "/ebetmo_final/insert_verify.php";
 
-                    }
+                    StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                            new Response.Listener<String>() {
+                                @SuppressLint("ResourceAsColor")
+                                @Override
+                                public void onResponse(String response) {
+                                    if(response.equals("Success")){
+
+                                        successDialog();
+                                        updateUserValidation(owner_id);
+                                        sessionManager.setValid("Verified");
+                                    }else
+                                        Toast.makeText(verification.this, response, Toast.LENGTH_SHORT).show();
+                                }
+                            }, new Response.ErrorListener() {
+                        @Override
+                        public void onErrorResponse(VolleyError error) {
+                            Log.e("Error", error.getLocalizedMessage());
+                        }
+                    }){
+                        protected Map<String, String> getParams(){
+                            Map<String, String> paramV = new HashMap<>();
+                            paramV.put("owner_id", owner_id);
+                            paramV.put("name", name1);
+                            paramV.put("age", age1);
+                            paramV.put("house", house1);
+                            paramV.put("street", street1);
+                            paramV.put("brgy", brgy1);
+                            paramV.put("city", city1);
+                            paramV.put("province", province1);
+                            paramV.put("zip", zip1);
+                            paramV.put("id_picture", base64image);
+                            paramV.put("id_type", ID_Type);
+
+                            return paramV;
+                        }
+                    };
+                    queue.add(stringRequest);
+
+//                    long result = sqLiteDatabase.insert("verification",null,contentValues);
+//                    if(result==-1){
+//                        Toast.makeText(getApplicationContext(), "Something problem in Inserting Data", Toast.LENGTH_SHORT).show();
+//                    }else{
+//                        successDialog();
+//                        updateUserValidation(owner_id);
+//                        sessionManager.setValid("Verified");
+//
+//
+//                    }
                 }
 
 
@@ -237,20 +304,53 @@ public class verification extends AppCompatActivity {
 
         dialog.show();
     }
-
-    private void updateUserValidation(String owner_id) {
+    private void updateUserValidation(String owner_id_verify) {
         String verify = "Verified";
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("verified", verify);
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+        String url ="http://" + final_ip.IP_ADDRESS + "/ebetmo_final/update_verify.php";
 
-        long result = sqLiteDatabase.update("users",contentValues,"id="+owner_id,null);
-        if(result==-1){
-            Toast.makeText(getApplicationContext(), "error user verification", Toast.LENGTH_SHORT).show();
-        }else{
-            Toast.makeText(this, "you are verified", Toast.LENGTH_SHORT).show();
-        }
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @SuppressLint("ResourceAsColor")
+                    @Override
+                    public void onResponse(String response) {
+                        if(response.equals("Success")){
+                            Toast.makeText(verification.this, "you are verified", Toast.LENGTH_SHORT).show();
+
+                        }else
+                            Toast.makeText(verification.this, response, Toast.LENGTH_SHORT).show();
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("Error", error.getLocalizedMessage());
+            }
+        }){
+            protected Map<String, String> getParams(){
+                Map<String, String> paramV = new HashMap<>();
+                paramV.put("owner_id", owner_id_verify);
+                paramV.put("verified", "Verified");
+
+
+                return paramV;
+            }
+        };
+        queue.add(stringRequest);
 
     }
+//    private void updateUserValidation(String owner_id) {
+//        String verify = "Verified";
+//        ContentValues contentValues = new ContentValues();
+//        contentValues.put("verified", verify);
+//
+//        long result = sqLiteDatabase.update("users",contentValues,"id="+owner_id,null);
+//        if(result==-1){
+//            Toast.makeText(getApplicationContext(), "error user verification", Toast.LENGTH_SHORT).show();
+//        }else{
+//            Toast.makeText(this, "you are verified", Toast.LENGTH_SHORT).show();
+//        }
+//
+//    }
 
     private void getIdDialog() {
         dialog.setContentView(R.layout.pick_id_dialog);
@@ -262,7 +362,10 @@ public class verification extends AppCompatActivity {
         id_picture = dialog.findViewById(R.id.id_picture);
         Button done = dialog.findViewById(R.id.done_btn);
 
-        pick_image.setOnClickListener(v -> mGetContent .launch("image/*"));
+//        pick_image.setOnClickListener(v -> mGetContent .launch("image/*"));
+        Intent intent = new Intent(Intent.ACTION_PICK);
+        intent.setData(MediaStore.Images.Media.INTERNAL_CONTENT_URI);
+        pick_image.setOnClickListener(v -> activityResultLauncher.launch(intent));
 
         done.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -283,16 +386,33 @@ public class verification extends AppCompatActivity {
 
         dialog.show();
     }
-
-    ActivityResultLauncher<String> mGetContent =registerForActivityResult(
-            new ActivityResultContracts.GetContent(),
-            new ActivityResultCallback<Uri>() {
+    ActivityResultLauncher<Intent> activityResultLauncher =
+            registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
                 @Override
-                public void onActivityResult(Uri result) {
-                    id_picture.setImageURI(result);
+                public void onActivityResult(ActivityResult result) {
+                    if(result.getResultCode() == Activity.RESULT_OK){
+                        Intent data = result.getData();
+                        Uri uri = data.getData();
+                        try {
+                            bitmap = MediaStore.Images.Media.getBitmap(getContentResolver(), uri);
+                            id_picture.setImageBitmap(bitmap);
+                        } catch (IOException e) {
+                            e.printStackTrace();
+                        }
 
+                    }
                 }
-            }
-    );
+            });
+
+//    ActivityResultLauncher<String> mGetContent =registerForActivityResult(
+//            new ActivityResultContracts.GetContent(),
+//            new ActivityResultCallback<Uri>() {
+//                @Override
+//                public void onActivityResult(Uri result) {
+//                    id_picture.setImageURI(result);
+//
+//                }
+//            }
+//    );
 
 }

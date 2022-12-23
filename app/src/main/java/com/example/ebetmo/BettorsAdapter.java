@@ -17,6 +17,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.squareup.picasso.Picasso;
+
 import org.w3c.dom.Text;
 
 import java.util.ArrayList;
@@ -67,31 +69,32 @@ public class BettorsAdapter extends RecyclerView.Adapter<BettorsAdapter.ViewHold
 
 
 
-        try{
-            String user_id = notifyModel.getOwner_id();
-            Cursor user = sqLiteDatabase.rawQuery("SELECT fullName, profile FROM users WHERE id=?", new String[]{user_id});
+//        try{
+//            String user_id = notifyModel.getOwner_id();
+//            Cursor user = sqLiteDatabase.rawQuery("SELECT fullName, profile FROM users WHERE id=?", new String[]{user_id});
+//
+//            while (user.moveToNext()){
+//                holder.user_name.setText(user.getString(0));
+//
+//                byte[]image = user.getBlob(1);
+//                Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0,image.length);
+//                holder.user_image.setImageBitmap(bitmap);
+//
+//
+//            }
+            Picasso.with(context).load("http://"+ final_ip.IP_ADDRESS +"/ebetmo_final/"+notifyModel.getItemImage()).into(holder.user_image);
 
-            while (user.moveToNext()){
-                holder.user_name.setText(user.getString(0));
-
-                byte[]image = user.getBlob(1);
-                Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0,image.length);
-                holder.user_image.setImageBitmap(bitmap);
-
-
-            }
-
-            Cursor bet = sqLiteDatabase.rawQuery("SELECT chosen_number FROM bets WHERE item_id =? and owner_id =?", new String[]{notifyModel.getItem_id(),user_id});
-            while(bet.moveToNext()){
-                holder.slot_number.setText(bet.getString(0));
-            }
-        }catch (Exception e){
-            e.printStackTrace();
-            Intent i = new Intent(context, home.class);
-            context.startActivity(i);
-            Toast.makeText(context, "Error: Try again!", Toast.LENGTH_SHORT).show();
-
-        }
+//            Cursor bet = sqLiteDatabase.rawQuery("SELECT chosen_number FROM bets WHERE item_id =? and owner_id =?", new String[]{notifyModel.getItem_id(),user_id});
+//            while(bet.moveToNext()){
+//                holder.slot_number.setText(bet.getString(0));
+//            }
+//        }catch (Exception e){
+//            e.printStackTrace();
+//            Intent i = new Intent(context, home.class);
+//            context.startActivity(i);
+//            Toast.makeText(context, "Error: Try again!", Toast.LENGTH_SHORT).show();
+//
+//        }
 
 
 

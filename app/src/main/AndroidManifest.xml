@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     package="com.example.ebetmo">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.SEND_SMS" />
@@ -14,7 +15,11 @@
         android:label="@string/app_name"
         android:roundIcon="@drawable/icon"
         android:supportsRtl="true"
-        android:theme="@style/Theme.EBetMo">
+        android:theme="@style/Theme.EBetMo"
+        android:usesCleartextTraffic="true">
+        <activity
+            android:name=".bet_item"
+            android:exported="false" />
         <activity
             android:name=".raffle"
             android:exported="false" />

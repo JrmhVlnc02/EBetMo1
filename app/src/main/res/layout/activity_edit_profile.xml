@@ -152,6 +152,7 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/panel"
                     android:fontFamily="@font/montserrat_regular"
+                    android:focusable="false"
                     android:hint="Email"
                     android:paddingStart="10dp"
                     android:textColor="@color/white" />
@@ -195,6 +196,7 @@
                     android:backgroundTint="@color/panel"
                     android:fontFamily="@font/montserrat_regular"
                     android:hint="Birth date"
+                    android:focusable="false"
                     android:paddingStart="10dp"
                     android:textColor="@color/white" />
 

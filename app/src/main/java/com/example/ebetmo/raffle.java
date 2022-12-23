@@ -13,6 +13,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -21,7 +22,20 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Random;
 
 public class raffle extends AppCompatActivity {
@@ -205,38 +219,101 @@ public class raffle extends AppCompatActivity {
     }
 
     private void displayBettors(String item_id) {
-        Cursor c = sqLiteDatabase.rawQuery("SELECT * FROM bets WHERE item_id=?", new String[]{item_id});
-        ArrayList<NotifyModel> notifyModels = new ArrayList<>();
-        if (c.getCount()>0){
-            draw.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.VISIBLE);
-            while(c.moveToNext()){
-                int id = c.getInt(0);
-                String owner_id = c.getString(1);
-                String items_id = c.getString(2);
-                String item_owner_id = c.getString(3);
-                byte[] image = c.getBlob(4);
-                String status = c.getString(5);
-                String chose = c.getString(6);
-                String date = c.getString(7);
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+        String url ="http://" + final_ip.IP_ADDRESS + "/ebetmo_final/display_item_notif.php";
 
-                notifyModels.add(new NotifyModel(id,owner_id,items_id,item_owner_id,status,chose,image,date));
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
 
+                        try {
+
+
+                            ArrayList<NotifyModel> notifyModels = new ArrayList<>();
+                            JSONArray jsonArray = new JSONArray(response);
+                            if(jsonArray.length() > 0 ) {
+
+                                for (int i = 0; i < jsonArray.length(); i++) {
+                                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+
+
+
+
+                                    int id = jsonObject.getInt("id");
+                                    String owner_id = jsonObject.getString("owner_id");
+                                    String item_id = jsonObject.getString("item_id");
+                                    String item_owner_id = jsonObject.getString("item_owner_id");
+                                    String image = jsonObject.getString("item_image");
+                                    String status = jsonObject.getString("status");
+                                    String chose = jsonObject.getString("chosen_number");
+                                    String date = jsonObject.getString("date");
+                                    notifyModels.add(new NotifyModel(id,owner_id,item_id,item_owner_id,status,chose,image,date));
+
+                                }
+                                bettorsAdapter = new BettorsAdapter(getApplicationContext(),R.layout.single_bettors,notifyModels,sqLiteDatabase,dbHelper);
+                                recyclerView.setLayoutManager(new LinearLayoutManager(getApplicationContext(),RecyclerView.VERTICAL, false));
+                                recyclerView.setAdapter(bettorsAdapter);
+                            }else {
+
+                                Toast.makeText(getApplicationContext(), "Empty Bettors", Toast.LENGTH_SHORT).show();
+                                draw.setVisibility(View.GONE);
+                                recyclerView.setVisibility(View.GONE);
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("Error", error.getLocalizedMessage());
             }
-            bettorsAdapter = new BettorsAdapter(this,R.layout.single_bettors,notifyModels,sqLiteDatabase,dbHelper);
-            recyclerView.setLayoutManager(new LinearLayoutManager(this,RecyclerView.VERTICAL, false));
-            recyclerView.setAdapter(bettorsAdapter);
-            c.close();
-
-        }else
-        {
-            Toast.makeText(this, "Empty Bettors", Toast.LENGTH_SHORT).show();
-            draw.setVisibility(View.GONE);
-            recyclerView.setVisibility(View.GONE);
-        }
+        }){
+            protected Map<String, String> getParams(){
+                Map<String, String> paramV = new HashMap<>();
+                paramV.put("user_id", sessionManager.getId());
+                return paramV;
+            }
+        };
+        queue.add(stringRequest);
 
 
     }
+
+//    private void displayBettors(String item_id) {
+//        Cursor c = sqLiteDatabase.rawQuery("SELECT * FROM bets WHERE item_id=?", new String[]{item_id});
+//        ArrayList<NotifyModel> notifyModels = new ArrayList<>();
+//        if (c.getCount()>0){
+//            draw.setVisibility(View.VISIBLE);
+//            recyclerView.setVisibility(View.VISIBLE);
+//            while(c.moveToNext()){
+//                int id = c.getInt(0);
+//                String owner_id = c.getString(1);
+//                String items_id = c.getString(2);
+//                String item_owner_id = c.getString(3);
+//                String image = c.getBlob(4);
+//                String status = c.getString(5);
+//                String chose = c.getString(6);
+//                String date = c.getString(7);
+//
+//                notifyModels.add(new NotifyModel(id,owner_id,items_id,item_owner_id,status,chose,image,date));
+//
+//            }
+//            bettorsAdapter = new BettorsAdapter(this,R.layout.single_bettors,notifyModels,sqLiteDatabase,dbHelper);
+//            recyclerView.setLayoutManager(new LinearLayoutManager(this,RecyclerView.VERTICAL, false));
+//            recyclerView.setAdapter(bettorsAdapter);
+//            c.close();
+//
+//        }else
+//        {
+//            Toast.makeText(this, "Empty Bettors", Toast.LENGTH_SHORT).show();
+//            draw.setVisibility(View.GONE);
+//            recyclerView.setVisibility(View.GONE);
+//        }
+//
+//
+//    }
 
     private void displayItemInfo(String item_id) {
         Cursor c = sqLiteDatabase.rawQuery("SELECT * FROM items WHERE id=?", new String[]{item_id});

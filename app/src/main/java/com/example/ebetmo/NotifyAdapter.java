@@ -23,6 +23,8 @@ import android.widget.Toast;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import com.squareup.picasso.Picasso;
+
 import org.w3c.dom.Text;
 
 import java.text.SimpleDateFormat;
@@ -59,9 +61,10 @@ public class NotifyAdapter extends RecyclerView.Adapter<NotifyAdapter.ViewHolder
     @Override
     public void onBindViewHolder(@NonNull NotifyAdapter.ViewHolder holder, int position) {
         final NotifyModel notifyModel = modelArrayList.get(position);
-        byte[]image = notifyModel.getItemImage();
-        Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0,image.length);
-        holder.item_image.setImageBitmap(bitmap);
+        String image = notifyModel.getItemImage();
+        Picasso.with(context).load("http://"+ final_ip.IP_ADDRESS +"/ebetmo_final/"+image).into(holder.item_image);
+//        Bitmap bitmap = BitmapFactory.decodeByteArray(image, 0,image.length);
+//        holder.item_image.setImageBitmap(bitmap);
 
         String fullWinner = "";
         String itemName = "";
@@ -170,9 +173,10 @@ public class NotifyAdapter extends RecyclerView.Adapter<NotifyAdapter.ViewHolder
                     }
                 });
 
-                byte[]picture = notifyModel.getItemImage();
-                Bitmap bit = BitmapFactory.decodeByteArray(picture, 0,picture.length);
-                item_pic.setImageBitmap(bit);
+                String picture = notifyModel.getItemImage();
+                Picasso.with(context).load("http://"+ final_ip.IP_ADDRESS +"/ebetmo_final/"+picture).into(item_pic);
+//                Bitmap bit = BitmapFactory.decodeByteArray(picture, 0,picture.length);
+//                item_pic.setImageBitmap(bit);
 
                 winner_name.setText(fullWinner);
                 item_name.setText(itemName);

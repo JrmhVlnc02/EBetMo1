@@ -1,6 +1,7 @@
 package com.example.ebetmo;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.recyclerview.widget.GridLayoutManager;
 
 import android.app.Dialog;
 import android.content.ContentValues;
@@ -9,6 +10,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -18,10 +20,23 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewSwitcher;
 
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.w3c.dom.Text;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.HashMap;
+import java.util.Map;
 
 public class get_coin extends AppCompatActivity {
     Button five, ten, twenty, fifty, one_hundred, two_hundred, five_hundred, one_thousand, two_thousand, three_thousand,four_thousand,five_thousand, proceed;
@@ -224,17 +239,21 @@ public class get_coin extends AppCompatActivity {
 
                 sessionManager.setCoin(String.valueOf(chosenTotal));
 
-                ContentValues contentValues = new ContentValues();
-                contentValues.put("coin", String.valueOf(chosenTotal));
-
-
-                long result = sqLiteDatabase.update("users",contentValues,"id="+user_id_session,null);
-                if(result==-1){
-                    Toast.makeText(getApplicationContext(), "error updating coin", Toast.LENGTH_SHORT).show();
-                }else{
-                    Toast.makeText(getApplicationContext(), "your coin is updated", Toast.LENGTH_SHORT).show();
-
-                }
+                updateUserCoin(String.valueOf(chosenTotal));
+//
+//                ContentValues contentValues = new ContentValues();
+//                contentValues.put("coin", String.valueOf(chosenTotal));
+//
+//
+//
+//
+//                long result = sqLiteDatabase.update("users",contentValues,"id="+user_id_session,null);
+//                if(result==-1){
+//                    Toast.makeText(getApplicationContext(), "error updating coin", Toast.LENGTH_SHORT).show();
+//                }else{
+//                    Toast.makeText(getApplicationContext(), "your coin is updated", Toast.LENGTH_SHORT).show();
+//
+//                }
 
                 insertTopUp(user_id_session, String.valueOf(chosenCoin));
 
@@ -250,22 +269,96 @@ public class get_coin extends AppCompatActivity {
 
     }
 
+    private void updateUserCoin(String total) {
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+        String url ="http://" + final_ip.IP_ADDRESS + "/ebetmo_final/update_user_coin.php";
+
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+                        if(response.equals("Success")) Toast.makeText(getApplicationContext(), "your coin is updated", Toast.LENGTH_SHORT).show();
+                        else Toast.makeText(getApplicationContext(), "error updating coin", Toast.LENGTH_SHORT).show();
+
+
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("Error", error.getLocalizedMessage());
+            }
+        }){
+            protected Map<String, String> getParams(){
+                Map<String, String> paramV = new HashMap<>();
+                paramV.put("coin", total);
+                paramV.put("user_id", sessionManager.getId());
+                return paramV;
+            }
+        };
+        queue.add(stringRequest);
+    }
+
     private void insertTopUp(String user_id_session, String chosen) {
         calendar = Calendar.getInstance();
         simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
         String Date = simpleDateFormat.format(calendar.getTime());
 
-        ContentValues contentValues = new ContentValues();
-        contentValues.put("amount", chosen);
-        contentValues.put("owner_id", user_id_session);
-        contentValues.put("date", Date);
+//        ContentValues contentValues = new ContentValues();
+//        contentValues.put("amount", chosen);
+//        contentValues.put("owner_id", user_id_session);
+//        contentValues.put("date", Date);
+//
+//        long result = sqLiteDatabase.insert("topUp",null,contentValues);
+//        if(result==-1){
+//            Toast.makeText(getApplicationContext(), "Something problem in Inserting coin!", Toast.LENGTH_SHORT).show();
+//
+//        }
 
-        long result = sqLiteDatabase.insert("topUp",null,contentValues);
-        if(result==-1){
-            Toast.makeText(getApplicationContext(), "Something problem in Inserting coin!", Toast.LENGTH_SHORT).show();
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+        String url ="http://" + final_ip.IP_ADDRESS + "/ebetmo_final/topup.php";
 
-        }
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @Override
+                    public void onResponse(String response) {
+
+
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("Error", error.getLocalizedMessage());
+            }
+        }){
+            protected Map<String, String> getParams(){
+                Map<String, String> paramV = new HashMap<>();
+                paramV.put("amount", chosen);
+                paramV.put("owner_id", user_id_session);
+                paramV.put("date", Date);
+                return paramV;
+            }
+        };
+        queue.add(stringRequest);
 
 
     }
+
+//    private void insertTopUp(String user_id_session, String chosen) {
+//        calendar = Calendar.getInstance();
+//        simpleDateFormat = new SimpleDateFormat("dd-MM-yyyy HH:mm:ss");
+//        String Date = simpleDateFormat.format(calendar.getTime());
+//
+//        ContentValues contentValues = new ContentValues();
+//        contentValues.put("amount", chosen);
+//        contentValues.put("owner_id", user_id_session);
+//        contentValues.put("date", Date);
+//
+//        long result = sqLiteDatabase.insert("topUp",null,contentValues);
+//        if(result==-1){
+//            Toast.makeText(getApplicationContext(), "Something problem in Inserting coin!", Toast.LENGTH_SHORT).show();
+//
+//        }
+//
+//
+//    }
 }

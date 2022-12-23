@@ -2,6 +2,7 @@ package com.example.ebetmo;
 
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Intent;
 import android.database.Cursor;
@@ -11,6 +12,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
@@ -18,6 +20,21 @@ import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
+
+import com.android.volley.Request;
+import com.android.volley.RequestQueue;
+import com.android.volley.Response;
+import com.android.volley.VolleyError;
+import com.android.volley.toolbox.StringRequest;
+import com.android.volley.toolbox.Volley;
+import com.squareup.picasso.Picasso;
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.util.HashMap;
+import java.util.Map;
 
 public class account extends AppCompatActivity {
     DBHelper dbHelper;
@@ -90,6 +107,9 @@ public class account extends AppCompatActivity {
                 yes.setOnClickListener(new View.OnClickListener() {
                     @Override
                     public void onClick(View view) {
+                        try{
+
+
                         //set login false
                         sessionManager.setLogin(false);
                         //ser username empty
@@ -101,6 +121,9 @@ public class account extends AppCompatActivity {
                         // finish activity
                         finish();
                         dialog.dismiss();
+                        }catch (Exception e){
+                            Toast.makeText(account.this, e.toString(), Toast.LENGTH_SHORT).show();
+                        }
                     }
                 });
 
@@ -165,15 +188,60 @@ public class account extends AppCompatActivity {
     }
 
     private void displayUserImage(String id) {
-        Cursor image = sqLiteDatabase.rawQuery("SELECT * FROM users WHERE id=?", new String[]{id});
-        if (image.getCount()>0){
-            while (image.moveToNext()) {
-                byte[]profile = image.getBlob(6);
-                Bitmap bitmap = BitmapFactory.decodeByteArray(profile, 0,profile.length);
-                user_image.setImageBitmap(bitmap);
-            }
+        RequestQueue queue = Volley.newRequestQueue(getApplicationContext());
+        String url ="http://" + final_ip.IP_ADDRESS + "/ebetmo_final/get_single_user.php";
 
-        }else Toast.makeText(this, "Error: Fetching User Image.", Toast.LENGTH_SHORT).show();
+        StringRequest stringRequest = new StringRequest(Request.Method.POST, url,
+                new Response.Listener<String>() {
+                    @SuppressLint("ResourceAsColor")
+                    @Override
+                    public void onResponse(String response) {
+
+                        try {
+                            JSONArray jsonArray = new JSONArray(response);
+                            if(jsonArray.length() > 0 ) {
+
+                                for (int i = 0; i < jsonArray.length(); i++) {
+                                    JSONObject jsonObject = jsonArray.getJSONObject(i);
+                                    Picasso.with(getApplicationContext()).load("http://"+ final_ip.IP_ADDRESS +"/ebetmo_final/"+jsonObject.getString("profile")).into(user_image);
+
+
+
+                                }
+
+                            }else{
+                                Toast.makeText(account.this, "Empty Record!", Toast.LENGTH_SHORT).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                        }
+                    }
+                }, new Response.ErrorListener() {
+            @Override
+            public void onErrorResponse(VolleyError error) {
+                Log.e("Error", error.getLocalizedMessage());
+            }
+        }){
+            protected Map<String, String> getParams(){
+                Map<String, String> paramV = new HashMap<>();
+                paramV.put("user_id", id);
+                return paramV;
+            }
+        };
+        queue.add(stringRequest);
 
     }
+
+//    private void displayUserImage(String id) {
+//        Cursor image = sqLiteDatabase.rawQuery("SELECT * FROM users WHERE id=?", new String[]{id});
+//        if (image.getCount()>0){
+//            while (image.moveToNext()) {
+//                byte[]profile = image.getBlob(6);
+//                Bitmap bitmap = BitmapFactory.decodeByteArray(profile, 0,profile.length);
+//                user_image.setImageBitmap(bitmap);
+//            }
+//
+//        }else Toast.makeText(this, "Error: Fetching User Image.", Toast.LENGTH_SHORT).show();
+//
+//    }
 }

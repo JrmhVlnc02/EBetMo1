@@ -126,6 +126,8 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/panel"
+                    android:text="Raffle"
+                    android:focusable="false"
                     android:hint="Type of betting"
                     android:textColor="@color/white" />
 
@@ -146,6 +148,7 @@
                     android:layout_height="wrap_content"
                     android:backgroundTint="@color/panel"
                     android:hint="Date of raffle"
+                    android:focusable="false"
                     android:drawableEnd="@drawable/ic_calendar_blue"
                     android:paddingEnd="10dp"
                     android:textColor="@color/white" />

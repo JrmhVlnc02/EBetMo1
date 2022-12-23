@@ -218,6 +218,7 @@
                     android:backgroundTint="@color/panel"
                     android:fontFamily="@font/montserrat_regular"
                     android:hint="Birth date"
+                    android:focusable="false"
                     android:drawableEnd="@drawable/ic_calendar_blue"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp"

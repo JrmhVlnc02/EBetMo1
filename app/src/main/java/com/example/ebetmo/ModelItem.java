@@ -4,7 +4,7 @@ public class ModelItem {
     private int itemId;
     private String itemName;
     private String Description;
-    private byte[] itemImage;
+    private String itemImage;
     private String type;
     private String date;
     private String owner;
@@ -13,7 +13,7 @@ public class ModelItem {
     //constructor
 
 
-    public ModelItem(int itemId, String itemName, String description, byte[] itemImage,  String type, String date, String owner, String slots, String price) {
+    public ModelItem(int itemId, String itemName, String description, String itemImage,  String type, String date, String owner, String slots, String price) {
         this.itemId = itemId;
         this.itemName = itemName;
         Description = description;
@@ -51,11 +51,11 @@ public class ModelItem {
         Description = description;
     }
 
-    public byte[] getItemImage() {
+    public String getItemImage() {
         return itemImage;
     }
 
-    public void setItemImage(byte[] itemImage) {
+    public void setItemImage(String itemImage) {
         this.itemImage = itemImage;
     }
 

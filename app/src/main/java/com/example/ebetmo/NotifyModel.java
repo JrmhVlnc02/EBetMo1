@@ -7,10 +7,10 @@ public class NotifyModel {
     private String item_owner_id;
     private String status;
     private String chosen;
-    private byte[] itemImage;
+    private String itemImage;
     private String date;
 
-    public NotifyModel(int notify_Id, String owner_id, String item_id, String item_owner_id, String status, String chosen, byte[] itemImage, String date) {
+    public NotifyModel(int notify_Id, String owner_id, String item_id, String item_owner_id, String status, String chosen, String itemImage, String date) {
         this.notify_Id = notify_Id;
         this.owner_id = owner_id;
         this.item_id = item_id;
@@ -69,11 +69,11 @@ public class NotifyModel {
         this.chosen = chosen;
     }
 
-    public byte[] getItemImage() {
+    public String getItemImage() {
         return itemImage;
     }
 
-    public void setItemImage(byte[] itemImage) {
+    public void setItemImage(String itemImage) {
         this.itemImage = itemImage;
     }
 
